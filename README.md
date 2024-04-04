@@ -4,6 +4,7 @@ Akari simulator for Rviz2
 ## Akari_ros2_humbleをRviz2で動かすプログラム
 Akari_ros2_humbleは[こちら](https://github.com/AkariGroup/akari_ros)
 
+---
 ### rvizdisplay.launch.py
 Rviz2でAkariを動かすことができます。
 
@@ -17,7 +18,7 @@ use_guiを入力しないと動きません
 ```
  ros2 launch rvizdisplay.launch.py use_gui:=False
 ```
-
+---
 ### rviz_sim.launch.py
 AkariがなくてもRviz2で動かすことができるプログラム（作成中そのうちUnityと連携します。）
 
