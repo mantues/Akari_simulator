@@ -9,6 +9,7 @@ from akari_msgs.srv import SetJointBool, SetJointFloat, SetJointPos, SetDisplayT
 from rclpy.node import Node
 
 from akari_client.position import Positions
+from akari_client.color import Colors
 
 class ServoClient(Node):  # type: ignore
     def __init__(self) -> None:
@@ -46,11 +47,12 @@ def main(args: Optional[str] = None) -> None:
     print("STEP2. display あけまして at middle center")
     req = SetDisplayText.Request()
     req.text = "あけまして"
-    req.pos_x = Positions.CENTER
-    req.pos_y = Positions.CENTER
+    req.pos_x = 10
+    req.pos_y = 10
     req.size = 6
-    req.text_color = "BLUE"
-    req.back_color = "YELLOW"
+    print(Colors.RED)
+    req.text_color = 'BLACK'
+    req.back_color ='WHITE'
     req.refresh = True
     client.future = client.cli.call_async(req)
     rclpy.spin_until_future_complete(client, client.future)
@@ -72,11 +74,11 @@ def main(args: Optional[str] = None) -> None:
     print("STEP2. display あけましておめでとうございます at middle center")
     req = SetDisplayText.Request()
     req.text = "あけまして\nおめでとう"
-    req.pos_x = Positions.CENTER
-    req.pos_y = Positions.CENTER
+    req.pos_x = 10
+    req.pos_y = 10
     req.size = 6
-    req.text_color = "BLUE"
-    req.back_color = "YELLOW"
+    req.text_color = 'BLACK'
+    req.back_color ='BLACK'
     req.refresh = True
     client.future = client.cli.call_async(req)
     rclpy.spin_until_future_complete(client, client.future)
@@ -98,11 +100,11 @@ def main(args: Optional[str] = None) -> None:
     print("STEP2. display あけましておめでとうございます at middle center")
     req = SetDisplayText.Request()
     req.text = "あけまして\nおめでとう\nございます"
-    req.pos_x = Positions.CENTER
-    req.pos_y = Positions.CENTER
+    req.pos_x = 10
+    req.pos_y = 10
     req.size = 6
-    req.text_color = "BLUE"
-    req.back_color = "YELLOW"
+    req.text_color = 'DARKGREEN'
+    req.back_color ='ORANGE'
     req.refresh = True
     client.future = client.cli.call_async(req)
     rclpy.spin_until_future_complete(client, client.future)

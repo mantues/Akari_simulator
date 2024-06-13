@@ -4,7 +4,7 @@
 import time
 
 import rclpy
-from akari_client.color import Color, Colors
+#from akari_client.color import Color, Colors
 from akari_client.position import Positions
 from akari_msgs.srv import (
     SetAllout,
@@ -25,29 +25,12 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from PIL import ImageFont, ImageDraw, Image
 import numpy as np
+import enum
 
-color_pair = [
-    "BLACK",
-    "NAVY",
-    "DARKGREEN",
-    "DARKCYAN",
-    "MAROON",
-    "PURPLE",
-    "OLIVE",
-    "LIGHTGREY",
-    "DARKGREY",
-    "BLUE",
-    "GREEN",
-    "CYAN",
-    "RED",
-    "MAGENTA",
-    "YELLOW",
-    "WHITE",
-    "ORANGE",
-    "GREENYELLOW",
-    "PINK",
-]
-
+color_list ={'BLACK': (255,0,0),'NAVY': (0, 0, 127), 'DARKGREEN': (0, 127, 0), 'DARKCYAN': (0, 127, 127), 'MAROON': (127, 0, 0), 'PURPLE': (127, 0, 127),
+'OLIVE': (127, 127, 0), 'LIGHTGREY': (192, 192, 192), 'DARKGREY': (127, 127, 127), 'BLUE': (0, 0, 255), 'GREEN': (0, 255, 0),
+'CYAN': (0, 255, 0), 'RED': (255, 0, 0), 'MAGENTA': (255, 0, 255), 'YELLOW': (255, 255, 0), 'WHITE': (255, 255, 255), 'ORANGE': (255, 165, 0), 'GREENYELLOW': (173, 255, 47), 'PINK': (255, 0, 255)
+}
 
 # server
 class M5Server(Node):
@@ -76,10 +59,12 @@ class M5Server(Node):
         self.package_dir = get_package_share_directory("akari_simulator")
         self.akari_image = cv2.imread(self.package_dir+'/image/akari.png')
         self.ipa_font = self.package_dir+'/font/ipaexg.ttf'
+        self.font = ImageFont.truetype(self.ipa_font, 20)        
         # create publisher
         timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.akari_callback)
         self.m5_image = self.create_publisher(sensorImage, "/m5_image", 10)
+        
         
     # SERVER CALL BACK
     def akari_callback(self) -> None:
@@ -125,16 +110,36 @@ class M5Server(Node):
         req_text_color = request.text_color
         req_back_color = request.back_color
         req_refresh = request.refresh
+        if req_text_color == req_back_color:
+            text_color = (0, 0, 0)
+            back_color = (255, 255, 255)
+        else:
+            if req_text_color in color_list.keys():
+                text_color = color_list[req_text_color]
+            else:
+                text_color = (0,0,0)
+            print(text_color)
+            if req_back_color in color_list.keys():
+                back_color = color_list[req_back_color]
+            else:
+                back_color = (255,255,255)
+        self.get_logger().info(f"Text color: {text_color}")
+        if req_refresh == True:
+            self.akari_image = cv2.rectangle(self.akari_image, (0,0), (199, 199), color=(255, 255, 255), thickness=-1)
+            time.sleep(0.05)
+            
         response.result = True
+        self.get_logger().info(f"Text position: {req_pos_x, req_pos_y}")
         try:
             #self.get_logger().info(f"image shape: {self.akari_image.shape}")
             PIL_image = Image.fromarray(self.akari_image)
             draw_image = ImageDraw.Draw(PIL_image)
+            text_size = draw_image.multiline_textsize(req_text, font=self.font)
+            self.get_logger().info(f"Text size: {text_size}")
             draw_image.rectangle(
-                  [(10, 110), (150, 175)], fill=(255, 255, 255), outline=(255, 255, 255), width=1
+                  [(req_pos_x, req_pos_y), (req_pos_x+text_size[0], req_pos_y+text_size[1])], fill=back_color, outline=back_color, width=1
                   )
-            font = ImageFont.truetype(self.ipa_font, 20)
-            draw_image.text((10, 110), req_text, font=font, fill=(255, 0, 0, 255))
+            draw_image.text((req_pos_x, req_pos_y), req_text, text_color, font=self.font)
             cvt_image = np.array(PIL_image)
             #cvt_image = cv2.cvtColor(cvt_image, cv2.COLOR_BGR2RGB)
             #self.akari_image = cv2.cvtColor(cvt_image, cv2.COLOR_RGBA2BGRA)
@@ -153,7 +158,7 @@ class M5Server(Node):
         response.result = True
         try:
             #self.m5.set_display_image(filepath, pos_x, pos_y, scale)
-            self.akari_image = cv2.imread(self.package_dir+'/image/akari.png')
+            self.akari_image = cv2.imread(filepath)
             cv_msg = self.bridge.cv2_to_imgmsg(self.akari_image, "bgr8")
             self.m5_image.publish(cv_msg)
         except BaseException as e:
@@ -168,17 +173,17 @@ class M5Server(Node):
             self.akari_image = cv2.rectangle(self.akari_image,
                 (10, 100),
                 (175, 120),
-                color=(255, 255, 255),
-                thickness=-1,
-                lineType=cv2.LINE_4)
+                color = self.colors.WHITE,
+                thickness = -1,
+                lineType = cv2.LINE_4)
             self.akari_image = cv2.putText(self.akari_image,
-                text='RESET IMAGE',
-                org=(10, 120),
-                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
-                fontScale=0.8,
-                color=(255, 255, 0),
-                thickness=2,
-                lineType=cv2.LINE_4)
+                text = 'RESET IMAGE',
+                org = (10, 120),
+                fontFace = cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale = 0.8,
+                color = self.colors.YELLOW,
+                thickness = 2,
+                lineType = cv2.LINE_4)
             cv_msg = self.bridge.cv2_to_imgmsg(self.akari_image, "bgr8")
             self.m5_image.publish(cv_msg)
             time.sleep(4)
@@ -188,8 +193,8 @@ class M5Server(Node):
             response.result = False
         return response
 
-def main(args=None):
-    rclpy.init(args=args)
+def main(args = None):
+    rclpy.init(args = args)
     server = M5Server()
     rclpy.spin(server)
     rclpy.shutdown()
